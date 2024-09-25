@@ -3,5 +3,9 @@ name = "rusty-rattle"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+
+
 [dependencies]
 rand = "0.8.5"
+crossterm = "0.28.1"
