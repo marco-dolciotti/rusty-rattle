@@ -1,6 +1,7 @@
 pub mod controller;
 pub mod model;
 pub mod views;
+pub mod event_processes;
 
 pub struct Config {
     view_type: ViewType,

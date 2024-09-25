@@ -4,52 +4,37 @@ use crossterm::{event::{self, Event, KeyCode}, terminal};
 
 use crate::{controller::Controller, model::{
     CellContent,
-    ModelToViewMessage::{self, *},
     Orientation, GRID_HEIGHT, GRID_WIDTH,
 }};
 
 use super::View;
+
 pub struct TuiView {
-    controller: Controller,
+}
+
+impl View for TuiView {
+    fn draw_title_screen(&self) {
+        Self::draw_title_screen();
+    }
+
+    fn draw_frame(&self, grid: [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
+        Self::draw_grid(grid);
+    }
+
+    fn draw_game_over(&self) {
+        Self::draw_game_over()
+    }
 }
 
 impl TuiView {
 
-    pub fn new(controller: Controller, receiver: mpsc::Receiver<ModelToViewMessage>) -> Self {
+    pub fn new() -> Self {
         TuiView {
-            controller
         }
     }
 
-    fn render_loop(receiver: mpsc::Receiver<ModelToViewMessage>) {
-        for message in receiver {
-            match message {
-                Quit => break,
-                UpdateFrame(grid) => Self::draw_grid(&grid),
-            }
-        }
-    }
 
-    fn input_loop(&self) {
-        terminal::enable_raw_mode().unwrap();
-        loop {
-            if event::poll(std::time::Duration::from_millis(500)).unwrap() {
-                match event::read().unwrap() {
-                    Event::Key(key_event) => match key_event.code {
-                        KeyCode::Char('q') => break, // Exit on 'q' key press
-                        KeyCode::Char(c) => println!("Pressed: {}", c),
-                        //TODO
-                        KeyCode::Esc => break, // Exit on Esc key press
-                        _ => {}
-                    },
-                    _ => {}
-                }
-            }
-        }
-        terminal::disable_raw_mode().unwrap();
-    }
-
-    fn draw_grid(grid: &[[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
+    fn draw_grid(grid: [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
 
         // clears the screen using ANSI escape codes
         print!("\x1B[2J\x1B[1;1H");
@@ -131,22 +116,52 @@ impl TuiView {
             CellContent::Apple => print!("●"),
         }
     }
+   
+
+                                                                                                 
+                                                                                                 
+
+ 
+    fn draw_game_over() {
+        // clears the screen using ANSI escape codes
+        print!("\x1B[2J\x1B[1;1H");
+
+
+        println!("");
+        println!("");
+        println!(" ██████   █████  ███    ███ ███████      ██████  ██    ██ ███████ ██████  ");
+        println!("██       ██   ██ ████  ████ ██          ██    ██ ██    ██ ██      ██   ██ ");
+        println!("██   ███ ███████ ██ ████ ██ █████       ██    ██ ██    ██ █████   ██████  ");
+        println!("██    ██ ██   ██ ██  ██  ██ ██          ██    ██  ██  ██  ██      ██   ██ ");
+        println!(" ██████  ██   ██ ██      ██ ███████      ██████    ████   ███████ ██   ██ ");
+        println!("");
+        println!("");
+        println!("                  press enter to continue, esc to quit");
+
+
+    }
+
+    fn draw_title_screen() {
+        // clears the screen using ANSI escape codes
+        print!("\x1B[2J\x1B[1;1H");
+
+        println!("Welcome to:");
+        println!("");
+        println!("");
+        println!("██████  ██    ██ ███████ ████████ ██    ██     ██████   █████  ████████ ████████ ██      ███████ ");
+        println!("██   ██ ██    ██ ██         ██     ██  ██      ██   ██ ██   ██    ██       ██    ██      ██      ");
+        println!("██████  ██    ██ ███████    ██      ████       ██████  ███████    ██       ██    ██      █████   ");
+        println!("██   ██ ██    ██      ██    ██       ██        ██   ██ ██   ██    ██       ██    ██      ██      ");
+        println!("██   ██  ██████  ███████    ██       ██        ██   ██ ██   ██    ██       ██    ███████ ███████ ");
+        println!("");
+        println!("");
+        println!("                                          controls:");
+        println!("                                            wads to move");
+        println!("                                            esc to quit");
+        println!("                                          press enter to continue");
+    }
 }
 
-impl View for TuiView {
-
-    fn run(&self, receiver: mpsc::Receiver<ModelToViewMessage>) {
-        //read rendering message loop
-        thread::spawn(move || Self::render_loop(receiver));
-
-        //user input loop
-        thread::spawn(|| self.input_loop());
-    }
-    
-    fn set_controller(&mut self, controller: crate::controller::Controller) {
-        self.controller = controller;
-    }
-}
 
 
 

@@ -66,5 +66,5 @@ fn test_draw_grid() {
         from: Orientation::Up,
     };
     grid[11][12] = CellContent::Tail(Orientation::Up);
-    TuiView::draw_grid(&grid);
+    TuiView::draw_grid(grid);
 }
