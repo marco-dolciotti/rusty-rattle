@@ -1,11 +1,8 @@
-use std::{collections::VecDeque, sync::Mutex, thread, time::{Duration, Instant}};
+use std::{collections::VecDeque, sync::Mutex};
 
 use crossterm::event::KeyCode;
 
 use crate::model::{GameState, Model, Orientation};
-
-//the time between one game update and the next
-const GAME_UPDATE_INTERVAL: Duration = Duration::from_millis(200);
 
 pub struct Controller {
     model: Model,
@@ -22,11 +19,8 @@ impl Controller {
 
     pub fn update_model(&mut self) {
         let direction = self.direction_buffer.lock().unwrap().pop_front();
-        match self.model.game_state() {
-            GameState::Playing => {
-                self.model.update(direction);
-            },
-            _ => {}
+        if self.model.game_state() == GameState::Playing {
+            self.model.update(direction);
         }
     }
 

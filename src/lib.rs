@@ -26,7 +26,7 @@ impl Config {
 }
 
 #[derive(Clone)]
-enum ViewType {
+pub enum ViewType {
     GUI,
     TUI,
 }

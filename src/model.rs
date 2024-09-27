@@ -1,11 +1,11 @@
-use std::{collections::VecDeque, sync::{self, mpsc}};
+use std::cell::Cell;
 
 use rand::{self, Rng};
 
 use crate::views::View;
 
-pub const GRID_HEIGHT: usize = 30;
-pub const GRID_WIDTH: usize = 40;
+pub const GRID_HEIGHT: usize = 10;
+pub const GRID_WIDTH: usize = 20;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Orientation {
@@ -16,15 +16,12 @@ pub enum Orientation {
 }
 impl Orientation {
     fn is_opposite(&self, other: Orientation) -> bool {
-        match (self, other) {
-
+        matches! ((self, other),
             (Orientation::Up, Orientation::Down) |
             (Orientation::Right, Orientation::Left) |
             (Orientation::Down, Orientation::Up) |
-            (Orientation::Left, Orientation::Right) => true,
-
-            _ => false,
-        }
+            (Orientation::Left, Orientation::Right)
+        )
     }
 }
 
@@ -35,8 +32,9 @@ pub enum GameState {
     GameOver,
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub enum CellContent {
+    #[default]
     Empty,
     Head(Orientation),
     Tail(Orientation),
@@ -45,21 +43,6 @@ pub enum CellContent {
         from: Orientation,
     },
     Apple,
-}
-impl CellContent {
-    fn is_snake(&self) -> bool {
-        match self {
-            CellContent::Empty | CellContent::Apple => false,
-            CellContent::Head(_) | CellContent::Tail(_) | CellContent::Body { towards: _, from: _ } => true,
-        }
-    }
-    
-    fn is_head(&self) -> bool {
-        match self {
-            CellContent::Head(_) => true,
-            _ => false
-        }
-    }
 }
 
 pub struct Model {
@@ -72,17 +55,35 @@ pub struct Model {
 impl Model {
     pub fn new(view: Box<dyn View>) -> Self {
 
+        let mut grid = core::array::from_fn(|_| 
+                                                core::array::from_fn(|_| 
+                                                    CellContent::default()));
+
+        //initialize snake
+        grid[GRID_HEIGHT / 2][GRID_WIDTH / 2] = CellContent::Head(Orientation::Up);
+        grid[GRID_HEIGHT / 2 + 1][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
+        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
+        grid[GRID_HEIGHT / 2 + 3][GRID_WIDTH / 2] = CellContent::Tail(Orientation::Up);
+
+        //initialize apple
+        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2 - 1] = CellContent::Apple;
+
+        //print title screen
+        view.draw_title_screen();
+
         Model {
             view,
             game_state: GameState::TitleScreen,
-            grid: [[CellContent::Empty; GRID_WIDTH]; GRID_HEIGHT],
+            grid,
             snake_len: 4
         }
-    }
-    // return true if the game is over
-    pub fn update(&mut self, input_direction: Option<Orientation>) -> bool {
 
-        let mut game_over = false;
+    }
+
+    //returns the game state after the update
+    pub fn update(&mut self, input_direction: Option<Orientation>) -> GameState {
+
+        let new_game_state= GameState::Playing;
 
         let (head_x, head_y) = self.head_coordinates();
 
@@ -99,27 +100,38 @@ impl Model {
         }
 
         //get the cell in front of the head
-        let (front_x, front_y) = match input_direction {
+        let front_coordinates: Option<(usize, usize)> = match input_direction {
 
-            Some(Orientation::Up) => (head_x, head_y - 1),
-            Some(Orientation::Down) => (head_x, head_y + 1),
-            Some(Orientation::Left) => (head_x - 1, head_y),
-            Some(Orientation::Right) => (head_x + 1, head_y),
+            Some(Orientation::Up) => head_y.checked_sub(1).map(|y| (head_x, y)),
+            Some(Orientation::Down) => Some((head_x, head_y + 1)),
+            Some(Orientation::Left) => head_x.checked_sub(1).map(|x| (x, head_y)),
+            Some(Orientation::Right) => Some((head_x + 1, head_y)),
 
             //if there is no input in the buffer, maintain the previous input_direction
             None => match head {
-                CellContent::Head(Orientation::Up) => (head_x, head_y - 1),
-                CellContent::Head(Orientation::Down) => (head_x, head_y + 1),
-                CellContent::Head(Orientation::Left) => (head_x - 1, head_y),
-                CellContent::Head(Orientation::Right) => (head_x + 1, head_y),
+                CellContent::Head(Orientation::Up) => head_y.checked_sub(1).map(|y| (head_x, y)),
+                CellContent::Head(Orientation::Down) => Some((head_x, head_y + 1)),
+                CellContent::Head(Orientation::Left) => head_x.checked_sub(1).map(|x| (x, head_y)),
+                CellContent::Head(Orientation::Right) => Some((head_x + 1, head_y)),
 
                 _ => panic!("expected head")
             }
         };
 
+        let (front_x, front_y) = match front_coordinates {
+            Some(_) => front_coordinates.unwrap(),
+            None => {
+                self.game_over();
+                return GameState::GameOver;
+            }
+        };
+
         let front = match self.get_cell(front_x, front_y){
             //wall collision => game over
-            None => return true,
+            None => {
+                self.game_over();
+                return GameState::GameOver;
+            }
             Some(h) => h
         };
 
@@ -129,23 +141,21 @@ impl Model {
             CellContent::Head(_) => panic!("there should not be a head in front of a head"),
             CellContent::Tail(_) => self.advance_snake(input_direction, false),
             CellContent::Body { towards: _, from: _ } => {
-                game_over = true;
+                self.game_over();
+                return GameState::GameOver;
             },
             CellContent::Apple => {
                 self.advance_snake(input_direction, true);
+                self.snake_len += 1;
                 self.spawn_apple()
             }
         }
         
-        match game_over {
-            true => {
-                self.view.draw_game_over();
-                self.game_state = GameState::GameOver;
-            }
-            false => {}
-        };
+        //if the game is still going update the view
+        self.draw_grid_on_view();
 
-        return game_over;
+
+        new_game_state
 
     }
     
@@ -179,69 +189,65 @@ impl Model {
         self.grid.get_mut(y)?.get_mut(x)
     }
     
-    fn advance_snake(&mut self, input_direction: Option<Orientation>, apple_is_eaten: bool) {
+    pub fn advance_snake(&mut self, input_direction: Option<Orientation>, apple_is_eaten: bool){
+        
+        let mut snake_coordinates = self.snake_coordinates().into_iter();
 
-        let (mut x_iter, mut y_iter) = self.tail_coordinates();
-
-
-        // start iteration at the tail
-        let mut cell_iter = self.get_cell_mut(x_iter, y_iter).expect("tail should not be outside the grid");
-        let cell_opt ;
-
-        //eliminate the tail if the apple was not eaten
         if !apple_is_eaten {
-
-            //delete tail
-            *cell_iter = CellContent::Empty;
-
-            let cell_cloned = cell_iter.clone();
-            (cell_opt, x_iter, y_iter) = self.next_snake_cell_mut(&cell_cloned, x_iter, y_iter);
-
-
-            //iterate to the cell after the tail and transform it to a tail
-            cell_iter = cell_opt.expect("tail should not point to wall");
-            match cell_iter {
-                CellContent::Body { towards, from: _} => *cell_iter = CellContent::Tail(*towards),
-                _ => panic!("tail should point to body")
+            let (x_tail, y_tail) = snake_coordinates.next().unwrap();
+            let tail = self.get_cell(x_tail, y_tail).unwrap().clone();
+            let next_tail_orientation;
+            let (o, _, _)= self.next_snake_cell(&tail, x_tail, y_tail);
+            match o.unwrap() {
+                CellContent::Body { towards, from: _ } => next_tail_orientation = towards.clone(),
+                _ => panic!(),
             }
-
+            self.remove_snake_part((x_tail, y_tail));
+            let (x_tail, y_tail) = snake_coordinates.next().unwrap();
+            *self.get_cell_mut(x_tail, y_tail).unwrap() = CellContent::Tail(next_tail_orientation);
         }
 
-        //now the cell_iter should point to the tail of the snake
-
-        let cell_iter = &cell_iter.clone();
-
-        //iterate on all the body and exit when encountering the head
-        while cell_iter.is_snake() && !cell_iter.is_head() {
-
-            (_, x_iter, y_iter) = self.next_snake_cell(&cell_iter, x_iter, y_iter);
-
+        let (x_head, y_head) = snake_coordinates.last().expect("snake should have a head");
+        let head = self.get_cell_mut(x_head, y_head).expect("snake should have a head");
+        match head {
+            CellContent::Head(head_orientation) => {
+                let walking_direction = input_direction.unwrap_or(*head_orientation);
+                //transform the head in body
+                *head = CellContent::Body { towards: walking_direction,from: *head_orientation};
+                let head = head.clone();
+                let (new_head, _, _) = self.next_snake_cell_mut(&head, x_head, y_head);
+                let new_head = new_head.expect("head should not point to wall in advance_snake()");
+                *new_head = CellContent::Head(walking_direction);
+            },
+            _ => panic!("last segment should be a head"),
         }
 
-        //now cell_iter should point to the head
+    }
 
-        let mut cell_iter = self.get_cell_mut(x_iter, y_iter).unwrap();
-        let cell_opt ;
+    // returns a vector of tuples, representing the coordinates of the body of the snake, from the tail to the head
+    fn snake_coordinates(&self) -> Vec<(usize, usize)>{
+        let mut cell_iter;
+        let mut cell_opt;
+        let mut x_iter; 
+        let mut y_iter;
 
-        if let CellContent::Head(prev_direction) = cell_iter {
+        let mut coordinates = Vec::new();
 
-            //the direction the snake moves towards this frame
-            let walking_direction = input_direction.unwrap_or(*prev_direction);
+        //start iteration at the tail
+        (x_iter, y_iter) = self.tail_coordinates();
+        cell_iter = self.get_cell(x_iter, y_iter).expect("this should be a tail");
+        coordinates.push((x_iter, y_iter));
 
-            *cell_iter = CellContent::Body { towards: walking_direction, from: *prev_direction};
-
-            //iterate to the next cell and transform it into a head
-            let cell_cloned = cell_iter.clone();
-            (cell_opt, _, _) = self.next_snake_cell_mut(&cell_cloned, x_iter, y_iter);
-
-            cell_iter = cell_opt.expect("head segment should not point at wall");
-
-            *cell_iter = CellContent::Head(walking_direction);
-
+        loop {
+            (cell_opt, x_iter, y_iter) = self.next_snake_cell(cell_iter, x_iter, y_iter);
+            cell_iter = cell_opt.expect("none of the body segments should point to a wall");
+            coordinates.push((x_iter, y_iter));
+            if let &CellContent::Head(_) = cell_iter {
+                break;
+            }
         }
-        else {
-            panic!("body should point to head")
-        }
+
+        coordinates
 
     }
 
@@ -255,7 +261,9 @@ impl Model {
                 Orientation::Down => (tail_x, tail_y + 1),
                 Orientation::Left => (tail_x - 1, tail_y),
             },
-            _ => panic!("expected snake cell")
+            _ => {
+                panic!("expected snake cell")
+            }
         };
 
         let next_cell = self.get_cell_mut(next_x, next_y);
@@ -303,9 +311,22 @@ impl Model {
             _ => {}
         }
     }
+
+    fn game_over(&mut self) {
+        self.game_state = GameState::GameOver;
+        self.view.draw_game_over();
+    }
+
+    fn draw_grid_on_view(&self) {
+        self.view.draw_frame(self.grid.clone());
+    }
     
     pub fn game_state(&self) -> GameState {
         self.game_state
+    }
+    
+    fn remove_snake_part(&mut self, (x_tail, y_tail): (usize, usize)) {
+        *self.get_cell_mut(x_tail, y_tail).expect("cell should be within grid") = CellContent::Empty;
     }
     
 }

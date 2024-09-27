@@ -1,10 +1,9 @@
 use std::{sync::mpsc::{Receiver, Sender}, thread, time::{Duration, Instant}};
 
-use crossterm::{event::{self, KeyCode}, terminal};
+use crossterm::{event::{self, KeyCode, KeyEventKind}, terminal};
 use crossterm::event::Event as CTEvent;
 
-use crate::{controller::Controller, model::Model};
-
+use crate::controller::Controller;
 const GAME_UPDATE_INTERVAL: std::time::Duration = Duration::from_millis(200);
 
 pub enum Event {
@@ -28,16 +27,21 @@ pub fn input_loop(sender: Sender<Event>) {
     loop {
         if event::poll(std::time::Duration::from_millis(500)).unwrap() {
             let result = match event::read().unwrap() {
-                CTEvent::Key(key_event) => match key_event.code {
-                    // Exit on Esc key press
-                    KeyCode::Esc => {
-                        sender.send(Event::Quit);
-                        break;
-                    }, 
-                    KeyCode::Char(c @ ('w' | 'a' | 's' | 'd'))=> sender.send(Event::Input(KeyCode::Char(c))),
-                    KeyCode::Enter => sender.send(Event::Input(KeyCode::Enter)),
-                    _ => Ok(()),
-                },
+                CTEvent::Key(key_event) => 
+                    if key_event.kind == KeyEventKind::Press {
+                        match key_event.code {
+                            // Exit on Esc key press
+                            KeyCode::Esc => {
+                                sender.send(Event::Quit).unwrap();
+                                break;
+                            }, 
+                            KeyCode::Char(c @ ('w' | 'a' | 's' | 'd'))=> sender.send(Event::Input(KeyCode::Char(c))),
+                            KeyCode::Enter => sender.send(Event::Input(KeyCode::Enter)),
+                            _ => Ok(()),
+                        }
+                    }
+                    else { Ok (()) }
+                
                 _ => Ok(()),
             };
             match result {
@@ -53,7 +57,9 @@ pub fn game_tick_loop(sender: Sender<Event>) {
     loop {
         let start = Instant::now();
 
-        sender.send(Event::Tick);
+        if let Err(_) = sender.send(Event::Tick) {
+            break;
+        }
 
         //calculate elapsed time
         let time_elapsed = start.elapsed();

@@ -1,8 +1,13 @@
-use crate::model::Orientation;
+#[allow(unused_imports)]
+use std::{thread, time::Duration};
 
+#[allow(unused_imports)]
+use crate::{model::{CellContent, Orientation}, views::tui_view::TuiView};
+
+#[test]
 fn test_draw_cell() {
-    use super::TuiView;
-    use crate::model::{CellContent, Orientation};
+    //to not overlap it with test_draw_grid()
+    thread::sleep(Duration::from_secs(2));
 
     print!("\n\n\n");
     CellContent::Empty.into_iter().for_each(|cell| TuiView::draw_cell(&cell));
@@ -14,7 +19,9 @@ fn test_draw_grid() {
     use super::TuiView;
     use crate::model::{CellContent, GRID_HEIGHT, GRID_WIDTH};
 
-    let mut grid = [[CellContent::Empty; GRID_WIDTH]; GRID_HEIGHT];
+    let mut grid = core::array::from_fn(|_| 
+                                            core::array::from_fn(|_| 
+                                                CellContent::default()));
     grid[1][1] = CellContent::Apple;
     grid[10][10] = CellContent::Head(Orientation::Up);
     grid[11][10] = CellContent::Body {

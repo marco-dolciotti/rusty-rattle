@@ -1,8 +1,7 @@
-use std::sync::mpsc;
 
 use tui_view::TuiView;
 
-use crate::{controller::Controller, model::{CellContent, GRID_HEIGHT, GRID_WIDTH}, Config, ViewType};
+use crate::{model::{CellContent, GRID_HEIGHT, GRID_WIDTH}, Config, ViewType};
 
 pub mod tui_view;
 

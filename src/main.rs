@@ -2,8 +2,8 @@ use std::{env, thread};
 use std::sync::mpsc;
 
 use rusty_rattle::controller::Controller;
-use rusty_rattle::model::{self, Model};
-use rusty_rattle::views::{self, tui_view};
+use rusty_rattle::model::Model;
+use rusty_rattle::views;
 use rusty_rattle::Config;
 use rusty_rattle::event_processes;
 
@@ -13,7 +13,7 @@ fn main() {
     let (event_sender, event_receiver) = mpsc::channel();
 
     let view = views::new_view(config);
-    let mut model = Model::new(view);
+    let model = Model::new(view);
     let controller = Controller::new(model);
 
     let event_sender_clone1 = event_sender.clone();
@@ -25,6 +25,6 @@ fn main() {
     ];
 
     for handle in handles {
-        handle.join();
+        handle.join().unwrap();
     }
 }

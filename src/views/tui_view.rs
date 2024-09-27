@@ -1,14 +1,13 @@
-use std::{io::{self, Read, Write}, thread, sync::mpsc};
+use std::io::Write;
 
-use crossterm::{event::{self, Event, KeyCode}, terminal};
-
-use crate::{controller::Controller, model::{
+use crate::model::{
     CellContent,
     Orientation, GRID_HEIGHT, GRID_WIDTH,
-}};
+};
 
 use super::View;
 
+#[derive(Default)]
 pub struct TuiView {
 }
 
@@ -45,7 +44,7 @@ impl TuiView {
             print!("═");       
         }
         print!("╗");       
-        print!("\n");
+        print!("\n\r");
 
         for row in grid {
             print!("║");
@@ -53,7 +52,7 @@ impl TuiView {
                 Self::draw_cell(&cell)
             }
             print!("║");
-            print!("\n");
+            print!("\n\r");
         }
 
         // bottom box wall
@@ -62,7 +61,7 @@ impl TuiView {
             print!("═");
         }
         print!("╝");
-        print!("\n");
+        print!("\n\r");
 
         //flush the output buffer
         std::io::stdout().flush().unwrap();
@@ -127,15 +126,15 @@ impl TuiView {
         print!("\x1B[2J\x1B[1;1H");
 
 
-        println!("");
-        println!("");
-        println!(" ██████   █████  ███    ███ ███████      ██████  ██    ██ ███████ ██████  ");
-        println!("██       ██   ██ ████  ████ ██          ██    ██ ██    ██ ██      ██   ██ ");
-        println!("██   ███ ███████ ██ ████ ██ █████       ██    ██ ██    ██ █████   ██████  ");
-        println!("██    ██ ██   ██ ██  ██  ██ ██          ██    ██  ██  ██  ██      ██   ██ ");
-        println!(" ██████  ██   ██ ██      ██ ███████      ██████    ████   ███████ ██   ██ ");
-        println!("");
-        println!("");
+        print!("\n\r");
+        print!("\n\r");
+        println!(" ██████   █████  ███    ███ ███████      ██████  ██    ██ ███████ ██████  \r");
+        println!("██       ██   ██ ████  ████ ██          ██    ██ ██    ██ ██      ██   ██ \r");
+        println!("██   ███ ███████ ██ ████ ██ █████       ██    ██ ██    ██ █████   ██████  \r");
+        println!("██    ██ ██   ██ ██  ██  ██ ██          ██    ██  ██  ██  ██      ██   ██ \r");
+        println!(" ██████  ██   ██ ██      ██ ███████      ██████    ████   ███████ ██   ██ \r");
+        print!("\n\r");
+        print!("\n\r");
         println!("                  press enter to continue, esc to quit");
 
 
@@ -146,15 +145,15 @@ impl TuiView {
         print!("\x1B[2J\x1B[1;1H");
 
         println!("Welcome to:");
-        println!("");
-        println!("");
+        print!("\n\r");
+        print!("\n\r");
         println!("██████  ██    ██ ███████ ████████ ██    ██     ██████   █████  ████████ ████████ ██      ███████ ");
         println!("██   ██ ██    ██ ██         ██     ██  ██      ██   ██ ██   ██    ██       ██    ██      ██      ");
         println!("██████  ██    ██ ███████    ██      ████       ██████  ███████    ██       ██    ██      █████   ");
         println!("██   ██ ██    ██      ██    ██       ██        ██   ██ ██   ██    ██       ██    ██      ██      ");
         println!("██   ██  ██████  ███████    ██       ██        ██   ██ ██   ██    ██       ██    ███████ ███████ ");
-        println!("");
-        println!("");
+        print!("\n\r");
+        print!("\n\r");
         println!("                                          controls:");
         println!("                                            wads to move");
         println!("                                            esc to quit");
