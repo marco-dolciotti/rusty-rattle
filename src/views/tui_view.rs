@@ -122,9 +122,6 @@ impl TuiView {
 
  
     fn draw_game_over() {
-        // clears the screen using ANSI escape codes
-        print!("\x1B[2J\x1B[1;1H");
-
 
         print!("\n\r");
         print!("\n\r");

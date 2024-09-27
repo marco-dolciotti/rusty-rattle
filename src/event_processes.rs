@@ -27,22 +27,20 @@ pub fn input_loop(sender: Sender<Event>) {
     loop {
         if event::poll(std::time::Duration::from_millis(500)).unwrap() {
             let result = match event::read().unwrap() {
-                CTEvent::Key(key_event) => 
-                    if key_event.kind == KeyEventKind::Press {
-                        match key_event.code {
-                            // Exit on Esc key press
-                            KeyCode::Esc => {
-                                sender.send(Event::Quit).unwrap();
-                                break;
-                            }, 
-                            KeyCode::Char(c @ ('w' | 'a' | 's' | 'd'))=> sender.send(Event::Input(KeyCode::Char(c))),
-                            KeyCode::Enter => sender.send(Event::Input(KeyCode::Enter)),
-                            _ => Ok(()),
-                        }
-                    }
-                    else { Ok (()) }
-                
-                _ => Ok(()),
+                // Exit on Esc key press
+                CTEvent::Key(event::KeyEvent { modifiers: _, state: _, 
+                    kind: KeyEventKind::Press,
+                    code: KeyCode::Esc}) => {
+                        sender.send(Event::Quit).unwrap();
+                        break;
+                    }, 
+                CTEvent::Key(event::KeyEvent { modifiers: _, state: _, 
+                    kind: KeyEventKind::Press,
+                    code: KeyCode::Char(c @ ('w' | 'a' | 's' | 'd'))}) => sender.send(Event::Input(KeyCode::Char(c))),
+                CTEvent::Key(event::KeyEvent { modifiers: _, state: _, 
+                    kind: KeyEventKind::Press,
+                    code: KeyCode::Enter}) => sender.send(Event::Input(KeyCode::Enter)),
+                _ => Ok(())
             };
             match result {
                 Ok(_) => {},
@@ -57,7 +55,7 @@ pub fn game_tick_loop(sender: Sender<Event>) {
     loop {
         let start = Instant::now();
 
-        if let Err(_) = sender.send(Event::Tick) {
+        if sender.send(Event::Tick).is_err() {
             break;
         }
 

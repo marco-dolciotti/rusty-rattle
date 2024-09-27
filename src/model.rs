@@ -1,3 +1,4 @@
+
 use std::cell::Cell;
 
 use rand::{self, Rng};
@@ -58,15 +59,6 @@ impl Model {
         let mut grid = core::array::from_fn(|_| 
                                                 core::array::from_fn(|_| 
                                                     CellContent::default()));
-
-        //initialize snake
-        grid[GRID_HEIGHT / 2][GRID_WIDTH / 2] = CellContent::Head(Orientation::Up);
-        grid[GRID_HEIGHT / 2 + 1][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
-        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
-        grid[GRID_HEIGHT / 2 + 3][GRID_WIDTH / 2] = CellContent::Tail(Orientation::Up);
-
-        //initialize apple
-        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2 - 1] = CellContent::Apple;
 
         //print title screen
         view.draw_title_screen();
@@ -196,12 +188,11 @@ impl Model {
         if !apple_is_eaten {
             let (x_tail, y_tail) = snake_coordinates.next().unwrap();
             let tail = self.get_cell(x_tail, y_tail).unwrap().clone();
-            let next_tail_orientation;
             let (o, _, _)= self.next_snake_cell(&tail, x_tail, y_tail);
-            match o.unwrap() {
-                CellContent::Body { towards, from: _ } => next_tail_orientation = towards.clone(),
+            let next_tail_orientation = match o.unwrap() {
+                CellContent::Body { towards, from: _ } => *towards,
                 _ => panic!(),
-            }
+            };
             self.remove_snake_part((x_tail, y_tail));
             let (x_tail, y_tail) = snake_coordinates.next().unwrap();
             *self.get_cell_mut(x_tail, y_tail).unwrap() = CellContent::Tail(next_tail_orientation);
@@ -306,6 +297,7 @@ impl Model {
     pub fn start_game(&mut self) {
         match self.game_state {
             GameState::TitleScreen | GameState::GameOver => {
+                Self::initialize_grid(&mut self.grid);
                 self.game_state = GameState::Playing;
             },
             _ => {}
@@ -327,6 +319,22 @@ impl Model {
     
     fn remove_snake_part(&mut self, (x_tail, y_tail): (usize, usize)) {
         *self.get_cell_mut(x_tail, y_tail).expect("cell should be within grid") = CellContent::Empty;
+    }
+    fn initialize_grid(grid: &mut [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
+
+        //initialize every cell as empty
+        grid.iter_mut().flat_map(|row| row.iter_mut()).for_each(|cell|
+            *cell = CellContent::Empty
+        );
+
+        //initialize snake
+        grid[GRID_HEIGHT / 2][GRID_WIDTH / 2] = CellContent::Head(Orientation::Up);
+        grid[GRID_HEIGHT / 2 + 1][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
+        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2] = CellContent::Body{ towards: Orientation::Up, from: Orientation::Up};
+        grid[GRID_HEIGHT / 2 + 3][GRID_WIDTH / 2] = CellContent::Tail(Orientation::Up);
+
+        //initialize apple
+        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2 - 1] = CellContent::Apple;
     }
     
 }

@@ -17,7 +17,7 @@ fn test_draw_cell() {
 #[test]
 fn test_draw_grid() {
     use super::TuiView;
-    use crate::model::{CellContent, GRID_HEIGHT, GRID_WIDTH};
+    use crate::model::CellContent;
 
     let mut grid = core::array::from_fn(|_| 
                                             core::array::from_fn(|_| 
