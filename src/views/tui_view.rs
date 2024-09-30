@@ -41,7 +41,7 @@ impl TuiView {
         // top box wall
         print!("╔");       
         for _ in 0..GRID_WIDTH {
-            print!("═");       
+            print!("══");       
         }
         print!("╗");       
         print!("\n\r");
@@ -58,7 +58,7 @@ impl TuiView {
         // bottom box wall
         print!("╚");
         for _ in 0..GRID_WIDTH {
-            print!("═");
+            print!("══");
         }
         print!("╝");
         print!("\n\r");
@@ -70,49 +70,49 @@ impl TuiView {
 
     fn draw_cell(cell: &CellContent) {
         match cell {
-            CellContent::Empty => print!(" "),
+            CellContent::Empty => print!("  "),
 
             CellContent::Head(orientation) => match orientation {
-                Orientation::Up => print!("▲"),
-                Orientation::Right => print!("▶"),
-                Orientation::Down => print!("▼"),
-                Orientation::Left => print!("◀"),
+                Orientation::Up => print!("▲ "),
+                Orientation::Right => print!("▶ "),
+                Orientation::Down => print!("▼ "),
+                Orientation::Left => print!(" ◀"),
             },
 
             CellContent::Tail(orientation) => match orientation {
-                Orientation::Up => print!("╵"),
-                Orientation::Right => print!("╶"),
-                Orientation::Down => print!("╷"),
-                Orientation::Left => print!("╴"),
+                Orientation::Up => print!("╵ "),
+                Orientation::Right => print!(" ╶"),
+                Orientation::Down => print!("╷ "),
+                Orientation::Left => print!("╴ "),
             },
 
             CellContent::Body { towards, from } => match (towards, from) {
                 (Orientation::Up, Orientation::Down) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Up, Orientation::Left) => print!("┗"),
-                (Orientation::Up, Orientation::Up) => print!("┃"),
-                (Orientation::Up, Orientation::Right) => print!("┛"),
-                (Orientation::Right, Orientation::Down) => print!("┗"),
+                (Orientation::Up, Orientation::Left) => print!("┗━"),
+                (Orientation::Up, Orientation::Up) => print!("┃ "),
+                (Orientation::Up, Orientation::Right) => print!("┛ "),
+                (Orientation::Right, Orientation::Down) => print!("┗━"),
                 (Orientation::Right, Orientation::Left) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Right, Orientation::Up) => print!("┏"),
-                (Orientation::Right, Orientation::Right) => print!("━"),
-                (Orientation::Down, Orientation::Down) => print!("┃"),
-                (Orientation::Down, Orientation::Left) => print!("┏"),
+                (Orientation::Right, Orientation::Up) => print!("┏━"),
+                (Orientation::Right, Orientation::Right) => print!("━━"),
+                (Orientation::Down, Orientation::Down) => print!("┃ "),
+                (Orientation::Down, Orientation::Left) => print!("┏━"),
                 (Orientation::Down, Orientation::Up) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Down, Orientation::Right) => print!("┓"),
-                (Orientation::Left, Orientation::Down) => print!("┛"),
-                (Orientation::Left, Orientation::Left) => print!("━"),
-                (Orientation::Left, Orientation::Up) => print!("┓"),
+                (Orientation::Down, Orientation::Right) => print!("┓ "),
+                (Orientation::Left, Orientation::Down) => print!("┛ "),
+                (Orientation::Left, Orientation::Left) => print!("━━"),
+                (Orientation::Left, Orientation::Up) => print!("┓ "),
                 (Orientation::Left, Orientation::Right) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
             },
-            CellContent::Apple => print!("●"),
+            CellContent::Apple => print!("● "),
         }
     }
    
