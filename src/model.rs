@@ -1,9 +1,6 @@
 use rand::{self, Rng};
 
-use crate::views::View;
-
-pub const GRID_HEIGHT: usize = 10;
-pub const GRID_WIDTH: usize = 20;
+use crate::{views::View, Config};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Orientation {
@@ -48,12 +45,14 @@ pub struct Model {
     view: Box<dyn View>,
     game_state: GameState,
     snake_len: usize,
-    grid: [[CellContent; GRID_WIDTH]; GRID_HEIGHT],
+    grid: Vec<Vec<CellContent>>,
+    grid_height: usize,
+    grid_width: usize,
 }
 
 impl Model {
-    pub fn new(view: Box<dyn View>) -> Self {
-        let mut grid = core::array::from_fn(|_| core::array::from_fn(|_| CellContent::default()));
+    pub fn new(view: Box<dyn View>, config: Config) -> Self {
+        let grid = vec![vec![CellContent::Empty; config.grid_width]; config.grid_height];
 
         //print title screen
         view.draw_title_screen();
@@ -62,6 +61,8 @@ impl Model {
             view,
             game_state: GameState::TitleScreen,
             grid,
+            grid_width: config.grid_width,
+            grid_height: config.grid_height,
             snake_len: 4,
         }
     }
@@ -296,7 +297,7 @@ impl Model {
     }
 
     fn spawn_apple(&mut self) {
-        let available_cells = GRID_WIDTH * GRID_HEIGHT - self.snake_len;
+        let available_cells = self.grid_width * self.grid_height - self.snake_len;
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..available_cells);
 
@@ -313,7 +314,7 @@ impl Model {
     pub fn start_game(&mut self) {
         match self.game_state {
             GameState::TitleScreen | GameState::GameOver => {
-                Self::initialize_grid(&mut self.grid);
+                Self::initialize_grid(&mut self.grid, (self.grid_width, self.grid_height));
                 self.game_state = GameState::Playing;
             }
             _ => {}
@@ -322,7 +323,7 @@ impl Model {
 
     fn game_over(&mut self) {
         self.game_state = GameState::GameOver;
-        self.view.draw_game_over();
+        self.view.draw_game_over(self.snake_len);
     }
 
     fn draw_grid_on_view(&self) {
@@ -338,28 +339,30 @@ impl Model {
             .get_cell_mut(x_tail, y_tail)
             .expect("cell should be within grid") = CellContent::Empty;
     }
-    fn initialize_grid(grid: &mut [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
+    fn initialize_grid(
+        grid: &mut Vec<Vec<CellContent>>,
+        (grid_width, grid_height): (usize, usize),
+    ) {
         //initialize every cell as empty
         grid.iter_mut()
             .flat_map(|row| row.iter_mut())
             .for_each(|cell| *cell = CellContent::Empty);
 
         //initialize snake
-        grid[GRID_HEIGHT / 2][GRID_WIDTH / 2] = CellContent::Head(Orientation::Up);
-        grid[GRID_HEIGHT / 2 + 1][GRID_WIDTH / 2] = CellContent::Body {
+        grid[grid_height / 2][grid_width / 2] = CellContent::Head(Orientation::Up);
+        grid[grid_height / 2 + 1][grid_width / 2] = CellContent::Body {
             towards: Orientation::Up,
             from: Orientation::Up,
         };
-        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2] = CellContent::Body {
+        grid[grid_height / 2 + 2][grid_width / 2] = CellContent::Body {
             towards: Orientation::Up,
             from: Orientation::Up,
         };
-        grid[GRID_HEIGHT / 2 + 3][GRID_WIDTH / 2] = CellContent::Tail(Orientation::Up);
+        grid[grid_height / 2 + 3][grid_width / 2] = CellContent::Tail(Orientation::Up);
 
         //initialize apple
-        grid[GRID_HEIGHT / 2 + 2][GRID_WIDTH / 2 - 1] = CellContent::Apple;
+        grid[grid_height / 2 + 2][grid_width / 2 - 1] = CellContent::Apple;
     }
 }
 
 mod cell_content_iterator;
-

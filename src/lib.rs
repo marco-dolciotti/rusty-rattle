@@ -1,10 +1,11 @@
 use std::time::Duration;
 
 pub mod controller;
+pub mod event_processes;
 pub mod model;
 pub mod views;
-pub mod event_processes;
 
+#[derive(Clone, Copy)]
 pub struct Config {
     view_type: ViewType,
     grid_height: usize,
@@ -17,18 +18,6 @@ impl Config {
         &self.view_type
     }
 
-    pub fn new<T>(args:&mut T) -> Self
-        where
-            T: Iterator<Item = String>
-    {
-        let view_type = match args.find(|arg| arg == "--gui") {
-            Some(_) => ViewType::GUI,
-            None => ViewType::TUI,
-        };
-
-        Config { view_type }
-    }
-
     pub fn builder() -> ConfigBuilder {
         ConfigBuilder {
             view_type: None,
@@ -38,7 +27,7 @@ impl Config {
         }
     }
 }
-struct ConfigBuilder {
+pub struct ConfigBuilder {
     view_type: Option<ViewType>,
     grid_height: Option<usize>,
     grid_width: Option<usize>,
@@ -46,27 +35,27 @@ struct ConfigBuilder {
 }
 
 impl ConfigBuilder {
-    fn set_view_type(mut self, view_type: ViewType) -> ConfigBuilder{
+    pub fn set_view_type(mut self, view_type: ViewType) -> ConfigBuilder {
         self.view_type = Some(view_type);
         return self;
     }
 
-    fn set_grid_height(mut self, grid_height: usize) -> ConfigBuilder{
+    pub fn set_grid_height(mut self, grid_height: usize) -> ConfigBuilder {
         self.grid_height = Some(grid_height);
         return self;
     }
 
-    fn set_grid_width(mut self, grid_width: usize) -> ConfigBuilder{
+    pub fn set_grid_width(mut self, grid_width: usize) -> ConfigBuilder {
         self.grid_width = Some(grid_width);
         return self;
     }
 
-    fn set_update_interval(mut self, update_interval: Duration) -> ConfigBuilder{
+    pub fn set_update_interval(mut self, update_interval: Duration) -> ConfigBuilder {
         self.update_interval = Some(update_interval);
         return self;
     }
 
-    fn build(self) -> Config {
+    pub fn build(self) -> Config {
         Config {
             view_type: self.view_type.unwrap_or(ViewType::TUI),
             grid_height: self.grid_height.unwrap_or(10),
@@ -74,10 +63,9 @@ impl ConfigBuilder {
             update_interval: self.update_interval.unwrap_or(Duration::from_millis(200)),
         }
     }
-
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum ViewType {
     GUI,
     TUI,

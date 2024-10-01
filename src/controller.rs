@@ -13,7 +13,7 @@ impl Controller {
     pub fn new(model: Model) -> Self {
         Controller {
             model,
-            direction_buffer: Mutex::new(VecDeque::new())
+            direction_buffer: Mutex::new(VecDeque::new()),
         }
     }
 
@@ -34,19 +34,29 @@ impl Controller {
             _ => {}
         }
     }
-    
+
     fn input_direction(&mut self, direction: crate::model::Orientation) {
         match self.model.game_state() {
-            GameState::Playing => self.direction_buffer.lock().unwrap().push_back(direction),
+            GameState::Playing => {
+                let mut input_stack = self.direction_buffer.lock().unwrap();
+                //only pushes the new direction if the previous one is different
+                //(to prevent an issue with repeating keys by holding them down)
+                if input_stack
+                    .back()
+                    .map(|dir| *dir != direction)
+                    .unwrap_or(true)
+                {
+                    input_stack.push_back(direction);
+                }
+            }
             GameState::TitleScreen | GameState::GameOver => {}
         }
     }
 
-    fn start_game(&mut self){
+    fn start_game(&mut self) {
         match self.model.game_state() {
             GameState::TitleScreen | GameState::GameOver => self.model.start_game(),
-            GameState::Playing => {},
+            GameState::Playing => {}
         }
     }
-
 }

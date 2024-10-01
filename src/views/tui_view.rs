@@ -1,71 +1,68 @@
-use std::io::Write;
+use std::io::{self, Write};
 
-use crate::model::{
-    CellContent,
-    Orientation, GRID_HEIGHT, GRID_WIDTH,
-};
+use crate::model::{CellContent, Orientation};
 
 use super::View;
 
+const WHITE: &str = "\u{1b}[0m";
+const GREEN: &str = "\u{1b}[32m";
+const RED: &str = "\u{1b}[31m";
+const BLUE: &str = "\u{1b}[34m";
+
 #[derive(Default)]
-pub struct TuiView {
-}
+pub struct TuiView {}
 
 impl View for TuiView {
     fn draw_title_screen(&self) {
         Self::draw_title_screen();
     }
 
-    fn draw_frame(&self, grid: [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
+    fn draw_frame(&self, grid: Vec<Vec<CellContent>>) {
         Self::draw_grid(grid);
     }
 
-    fn draw_game_over(&self) {
-        Self::draw_game_over()
+    fn draw_game_over(&self, score: usize) {
+        Self::draw_game_over(score)
     }
 }
 
 impl TuiView {
-
     pub fn new() -> Self {
-        TuiView {
-        }
+        crossterm::style::Colored::set_ansi_color_disabled(false);
+        TuiView {}
     }
 
-
-    fn draw_grid(grid: [[CellContent; GRID_WIDTH]; GRID_HEIGHT]) {
-
+    fn draw_grid(grid: Vec<Vec<CellContent>>) {
         // clears the screen using ANSI escape codes
         print!("\x1B[2J\x1B[1;1H");
 
         // top box wall
-        print!("╔");       
-        for _ in 0..GRID_WIDTH {
-            print!("══");       
+        Self::print_blue("╔═");
+        for _ in 0..grid[0].len() {
+            Self::print_blue("══");
         }
-        print!("╗");       
+        Self::print_blue("╗ ");
         print!("\n\r");
 
-        for row in grid {
-            print!("║");
+        for row in &grid {
+            Self::print_blue("║ ");
             for cell in row {
                 Self::draw_cell(&cell)
             }
-            print!("║");
+            Self::print_blue("║ ");
             print!("\n\r");
         }
 
         // bottom box wall
-        print!("╚");
-        for _ in 0..GRID_WIDTH {
-            print!("══");
+        Self::print_blue("╚═");
+        for _ in 0..grid[0].len() {
+            Self::print_blue("══");
         }
-        print!("╝");
+        Self::print_blue("╝ ");
         print!("\n\r");
 
         //flush the output buffer
         std::io::stdout().flush().unwrap();
-
     }
 
     fn draw_cell(cell: &CellContent) {
@@ -73,92 +70,112 @@ impl TuiView {
             CellContent::Empty => print!("  "),
 
             CellContent::Head(orientation) => match orientation {
-                Orientation::Up => print!("▲ "),
-                Orientation::Right => print!("▶ "),
-                Orientation::Down => print!("▼ "),
-                Orientation::Left => print!(" ◀"),
+                Orientation::Up => Self::print_green("▲ "),
+                Orientation::Right => Self::print_green("▶ "),
+                Orientation::Down => Self::print_green("▼ "),
+                Orientation::Left => Self::print_green(" ◀"),
             },
 
             CellContent::Tail(orientation) => match orientation {
-                Orientation::Up => print!("╵ "),
-                Orientation::Right => print!(" ╶"),
-                Orientation::Down => print!("╷ "),
-                Orientation::Left => print!("╴ "),
+                Orientation::Up => Self::print_green("╵ "),
+                Orientation::Right => Self::print_green(" ╶"),
+                Orientation::Down => Self::print_green("╷ "),
+                Orientation::Left => Self::print_green("╴ "),
             },
 
             CellContent::Body { towards, from } => match (towards, from) {
                 (Orientation::Up, Orientation::Down) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Up, Orientation::Left) => print!("┗━"),
-                (Orientation::Up, Orientation::Up) => print!("┃ "),
-                (Orientation::Up, Orientation::Right) => print!("┛ "),
-                (Orientation::Right, Orientation::Down) => print!("┗━"),
+                (Orientation::Up, Orientation::Left) => Self::print_green("┗━"),
+                (Orientation::Up, Orientation::Up) => Self::print_green("┃ "),
+                (Orientation::Up, Orientation::Right) => Self::print_green("┛ "),
+                (Orientation::Right, Orientation::Down) => Self::print_green("┗━"),
                 (Orientation::Right, Orientation::Left) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Right, Orientation::Up) => print!("┏━"),
-                (Orientation::Right, Orientation::Right) => print!("━━"),
-                (Orientation::Down, Orientation::Down) => print!("┃ "),
-                (Orientation::Down, Orientation::Left) => print!("┏━"),
+                (Orientation::Right, Orientation::Up) => Self::print_green("┏━"),
+                (Orientation::Right, Orientation::Right) => Self::print_green("━━"),
+                (Orientation::Down, Orientation::Down) => Self::print_green("┃ "),
+                (Orientation::Down, Orientation::Left) => Self::print_green("┏━"),
                 (Orientation::Down, Orientation::Up) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
-                (Orientation::Down, Orientation::Right) => print!("┓ "),
-                (Orientation::Left, Orientation::Down) => print!("┛ "),
-                (Orientation::Left, Orientation::Left) => print!("━━"),
-                (Orientation::Left, Orientation::Up) => print!("┓ "),
+                (Orientation::Down, Orientation::Right) => Self::print_green("┓ "),
+                (Orientation::Left, Orientation::Down) => Self::print_green("┛ "),
+                (Orientation::Left, Orientation::Left) => Self::print_green("━━"),
+                (Orientation::Left, Orientation::Up) => Self::print_green("┓ "),
                 (Orientation::Left, Orientation::Right) => {
                     panic!("impossible snake orientation {:?}", (from, towards))
                 }
             },
-            CellContent::Apple => print!("● "),
+            CellContent::Apple => Self::print_red("● "),
         }
     }
-   
 
-                                                                                                 
-                                                                                                 
-
- 
-    fn draw_game_over() {
-
+    fn draw_game_over(score: usize) {
         print!("\n\r");
         print!("\n\r");
-        println!(" ██████   █████  ███    ███ ███████      ██████  ██    ██ ███████ ██████  \r");
-        println!("██       ██   ██ ████  ████ ██          ██    ██ ██    ██ ██      ██   ██ \r");
-        println!("██   ███ ███████ ██ ████ ██ █████       ██    ██ ██    ██ █████   ██████  \r");
-        println!("██    ██ ██   ██ ██  ██  ██ ██          ██    ██  ██  ██  ██      ██   ██ \r");
-        println!(" ██████  ██   ██ ██      ██ ███████      ██████    ████   ███████ ██   ██ \r");
+        Self::print_red(
+            " ██████   █████  ███    ███ ███████      ██████  ██    ██ ███████ ██████  \r\n",
+        );
+        Self::print_red(
+            "██       ██   ██ ████  ████ ██          ██    ██ ██    ██ ██      ██   ██ \r\n",
+        );
+        Self::print_red(
+            "██   ███ ███████ ██ ████ ██ █████       ██    ██ ██    ██ █████   ██████  \r\n",
+        );
+        Self::print_red(
+            "██    ██ ██   ██ ██  ██  ██ ██          ██    ██  ██  ██  ██      ██   ██ \r\n",
+        );
+        Self::print_red(
+            " ██████  ██   ██ ██      ██ ███████      ██████    ████   ███████ ██   ██ \r\n",
+        );
         print!("\n\r");
         print!("\n\r");
-        println!("                  press enter to continue, esc to quit");
+        println!("                  press enter to continue, esc to quit\r");
+        println!("\r");
+        Self::print_blue(&format!("                        your score is: {score}\r"));
 
-
+        io::stdout().flush().expect("failed to flush")
     }
 
     fn draw_title_screen() {
         // clears the screen using ANSI escape codes
         print!("\x1B[2J\x1B[1;1H");
 
-        println!("Welcome to:");
+        println!("Welcome to:\r");
         print!("\n\r");
         print!("\n\r");
-        println!("██████  ██    ██ ███████ ████████ ██    ██     ██████   █████  ████████ ████████ ██      ███████ ");
-        println!("██   ██ ██    ██ ██         ██     ██  ██      ██   ██ ██   ██    ██       ██    ██      ██      ");
-        println!("██████  ██    ██ ███████    ██      ████       ██████  ███████    ██       ██    ██      █████   ");
-        println!("██   ██ ██    ██      ██    ██       ██        ██   ██ ██   ██    ██       ██    ██      ██      ");
-        println!("██   ██  ██████  ███████    ██       ██        ██   ██ ██   ██    ██       ██    ███████ ███████ ");
+        Self::print_green("██████  ██    ██ ███████ ████████ ██    ██     ██████   █████  ████████ ████████ ██      ███████ \r\n");
+        Self::print_green("██   ██ ██    ██ ██         ██     ██  ██      ██   ██ ██   ██    ██       ██    ██      ██      \r\n");
+        Self::print_green("██████  ██    ██ ███████    ██      ████       ██████  ███████    ██       ██    ██      █████   \r\n");
+        Self::print_green("██   ██ ██    ██      ██    ██       ██        ██   ██ ██   ██    ██       ██    ██      ██      \r\n");
+        Self::print_green("██   ██  ██████  ███████    ██       ██        ██   ██ ██   ██    ██       ██    ███████ ███████ \r\n");
         print!("\n\r");
         print!("\n\r");
-        println!("                                          controls:");
-        println!("                                            wads to move");
-        println!("                                            esc to quit");
-        println!("                                          press enter to continue");
+        println!("                                          controls:\r");
+        println!("                                            wads to move\r");
+        println!("                                            esc to quit\r");
+        println!("");
+        Self::print_blue("                                          press enter to continue\r");
+    }
+
+    fn print_green(s: &str) {
+        print!("{GREEN}");
+        print!("{s}");
+        print!("{WHITE}");
+    }
+    fn print_red(s: &str) {
+        print!("{RED}");
+        print!("{s}");
+        print!("{WHITE}");
+    }
+    fn print_blue(s: &str) {
+        print!("{BLUE}");
+        print!("{s}");
+        print!("{WHITE}");
     }
 }
-
-
-
 
 mod tests;

@@ -2,7 +2,10 @@
 use std::{thread, time::Duration};
 
 #[allow(unused_imports)]
-use crate::{model::{CellContent, Orientation}, views::tui_view::TuiView};
+use crate::{
+    model::{CellContent, Orientation},
+    views::tui_view::TuiView,
+};
 
 #[test]
 fn test_draw_cell() {
@@ -10,7 +13,9 @@ fn test_draw_cell() {
     thread::sleep(Duration::from_secs(2));
 
     print!("\n\n\n");
-    CellContent::Empty.into_iter().for_each(|cell| TuiView::draw_cell(&cell));
+    CellContent::Empty
+        .into_iter()
+        .for_each(|cell| TuiView::draw_cell(&cell));
     print!("\n\n\n");
 }
 
@@ -19,9 +24,8 @@ fn test_draw_grid() {
     use super::TuiView;
     use crate::model::CellContent;
 
-    let mut grid = core::array::from_fn(|_| 
-                                            core::array::from_fn(|_| 
-                                                CellContent::default()));
+    let mut grid = vec![vec![CellContent::Empty; 30]; 20];
+
     grid[1][1] = CellContent::Apple;
     grid[10][10] = CellContent::Head(Orientation::Up);
     grid[11][10] = CellContent::Body {
