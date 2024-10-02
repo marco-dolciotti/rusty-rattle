@@ -1,7 +1,6 @@
 # rusty-rattle
 A simple Snake clone using Rust lang, this is just a personal project used to learn the language
 
-<span style="color: green">
 ╔═════════════════════════════════════════════════════════\
 ║                                                         \
 ║      ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ \
@@ -28,7 +27,6 @@ A simple Snake clone using Rust lang, this is just a personal project used to le
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛       ║\
                                                               ║\
 ══════════════════════════════════════════════════════════════╝\
-</span>
 
 ## Usage
 
