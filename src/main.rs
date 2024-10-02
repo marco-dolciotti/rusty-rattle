@@ -41,7 +41,7 @@ fn initialize_config() -> Config {
     stdin
         .read_line(&mut grid_height)
         .expect("failed to read line");
-    let grid_height = grid_height.trim().parse().expect("invalid number");
+    let grid_height = grid_height.trim().parse().unwrap_or(20);
 
     print!("choose the grid width:");
     io::stdout().flush().expect("failed to flush stdout");
@@ -49,7 +49,7 @@ fn initialize_config() -> Config {
     stdin
         .read_line(&mut grid_width)
         .expect("failed to read line");
-    let grid_width = grid_width.trim().parse().expect("invalid number");
+    let grid_width = grid_width.trim().parse().unwrap_or(30);
 
     print!("choose the time interval between steps (in milliseconds):");
     io::stdout().flush().expect("failed to flush stdout");
@@ -57,7 +57,7 @@ fn initialize_config() -> Config {
     stdin
         .read_line(&mut update_interval)
         .expect("failed to read line");
-    let update_interval = update_interval.trim().parse().expect("invalid number");
+    let update_interval = update_interval.trim().parse().unwrap_or(200);
     let update_interval = Duration::from_millis(update_interval);
 
     let config = Config::builder()

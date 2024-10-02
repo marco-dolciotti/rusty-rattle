@@ -4,10 +4,35 @@ use crate::model::{CellContent, Orientation};
 
 use super::View;
 
+// linux colors
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 const WHITE: &str = "\u{1b}[0m";
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 const GREEN: &str = "\u{1b}[32m";
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 const RED: &str = "\u{1b}[31m";
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 const BLUE: &str = "\u{1b}[34m";
+
+// windows colors
+#[cfg(target_os = "windows")]
+const WHITE: &str = "[0m";
+#[cfg(target_os = "windows")]
+const GREEN: &str = "[32m";
+#[cfg(target_os = "windows")]
+const RED: &str = "[31m";
+#[cfg(target_os = "windows")]
+const BLUE: &str = "[34m";
+
+// default colors
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+const WHITE: &str = "";
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+const GREEN: &str = "";
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+const RED: &str = "";
+#[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+const BLUE: &str = "";
 
 #[derive(Default)]
 pub struct TuiView {}
